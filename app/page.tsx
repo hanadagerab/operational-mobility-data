@@ -268,7 +268,7 @@ export default function Home() {
                   selected.confidence
                 )}`}
               >
-                {selected.confidence}
+                Pattern evidence · {selected.confidence}
               </span>
             </div>
 
@@ -302,7 +302,7 @@ export default function Home() {
             </div>
 
             <p className="mt-3 text-xs text-slate-500">
-              Confidence reflects evidence coverage, not severity or danger.
+              Pattern evidence reflects coverage across observed passages and participating vehicles. It does not indicate severity or danger.
             </p>
 
             <div className="mt-7 border-t border-slate-200 pt-6">
@@ -372,7 +372,7 @@ export default function Home() {
                       : 0}%
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    mean signal confidence
+                    mean detection certainty
                   </p>
                 </div>
               </div>
@@ -483,7 +483,7 @@ export default function Home() {
 
                     <div className="mt-5 grid grid-cols-2 gap-4">
                       <label className="text-xs font-semibold text-slate-600">
-                        2 · Severity
+                        2 · Operational severity
                         <select
                           value={severity}
                           onChange={(event) => setSeverity(event.target.value)}
@@ -496,7 +496,7 @@ export default function Home() {
                       </label>
 
                       <label className="text-xs font-semibold text-slate-600">
-                        3 · Investigation confidence
+                        3 · Confidence in your explanation
                         <select
                           value={investigationConfidence}
                           onChange={(event) =>
