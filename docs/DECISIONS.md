@@ -25,3 +25,20 @@
 
 ### Next move
 Connect the existing local Git repository to GitHub before writing product code.
+
+## Deployment 1 — Geographic Route Checkpoint
+
+### Working
+- Static operational dashboard.
+- Synthetic geographic Route 12 visualization.
+- Selectable route locations.
+- Evidence card updates by selected location.
+- Normalized rate, passages, vehicles, and confidence are visible.
+- GitHub repository connected to Vercel.
+- Production deployment verified.
+
+### Deployment
+- Production: https://operational-mobility-data.vercel.app
+
+### Next move
+Add synthetic smartphone telemetry and lightweight ML event detection while preserving aggregate-first analysis.
