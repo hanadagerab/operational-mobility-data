@@ -89,6 +89,7 @@ export default function Home() {
   const [severity, setSeverity] = useState("Medium");
   const [investigationConfidence, setInvestigationConfidence] = useState("Medium");
   const [notes, setNotes] = useState("");
+  const [possibleAction, setPossibleAction] = useState("");
   const [saved, setSaved] = useState(false);
 
   const selected =
@@ -122,7 +123,36 @@ export default function Home() {
               SIMULATED PILOT DATA
             </span>
 
-            <button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                const exportData = locations.map((location) => ({
+                  location: location.id,
+                  mapXPercent: location.x,
+                  mapYPercent: location.y,
+                  eventsPer100Passages: location.rate,
+                  instrumentedPassages: location.passages,
+                  participatingVehicles: location.vehicles,
+                  confidence: location.confidence,
+                  simulated: true,
+                }));
+
+                const blob = new Blob(
+                  [JSON.stringify(exportData, null, 2)],
+                  { type: "application/json" }
+                );
+
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "route-12-operational-data.json";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50"
+            >
               Export Operational Data
             </button>
           </div>
@@ -189,7 +219,13 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       setSelectedId(location.id);
-                      setInvestigating(false);
+                    setInvestigating(false);
+                    setClassification("");
+                    setSeverity("Medium");
+                    setInvestigationConfidence("Medium");
+                    setNotes("");
+                    setPossibleAction("");
+                    setSaved(false);
                     }}
                     aria-label={`Select ${location.label}`}
                     className="absolute -translate-x-1/2 -translate-y-1/2 text-left"
@@ -420,9 +456,10 @@ export default function Home() {
 
                     <div className="mt-2 grid gap-2">
                       {[
-                        ["Operational", "Stop placement, schedule, dispatch, or operating rule."],
+                        ["Controllable", "Stop placement, schedule, dispatch, or operating rule within operator control."],
                         ["External", "Road surface, signal, geometry, traffic, or street condition."],
-                        ["Mixed / unclear", "Evidence does not support a single explanation yet."],
+                        ["Mixed", "Operational and external factors may both contribute."],
+                        ["Unknown", "Available evidence does not support a classification yet."],
                       ].map(([label, description]) => (
                         <button
                           key={label}
@@ -484,7 +521,21 @@ export default function Home() {
                       />
                     </label>
 
-                    <button
+                                  <label className="mt-4 block text-xs font-semibold text-slate-600">
+                5 · Possible action
+                <textarea
+                  value={possibleAction}
+                  onChange={(event) => setPossibleAction(event.target.value)}
+                  maxLength={300}
+                  placeholder="Record a possible operational next step..."
+                  className="mt-2 min-h-20 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900"
+                />
+                <span className="mt-1 block text-right text-xs font-normal text-slate-400">
+                  {possibleAction.length}/300
+                </span>
+              </label>
+
+<button
                       type="button"
                       disabled={!classification}
                       onClick={() => setSaved(true)}
