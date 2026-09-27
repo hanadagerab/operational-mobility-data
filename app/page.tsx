@@ -536,6 +536,21 @@ export default function Home() {
           </aside>
         </div>
       </section>
+
+      <footer className="mt-8 border-t border-slate-200 pt-5">
+        <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            <span className="font-semibold text-slate-700">
+              Synthetic pilot data
+            </span>
+            {" · "}No live telemetry, PII, or driver identities.
+          </p>
+
+          <p>
+            Human investigation required · No automated enforcement
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }

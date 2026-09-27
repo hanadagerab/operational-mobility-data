@@ -42,3 +42,21 @@ Connect the existing local Git repository to GitHub before writing product code.
 
 ### Next move
 Add synthetic smartphone telemetry and lightweight ML event detection while preserving aggregate-first analysis.
+
+## Security Floor
+
+The prototype deliberately uses synthetic data and no persistent backend.
+
+Security choices:
+- no PII;
+- no driver identity;
+- no credentials or secrets;
+- no external AI API;
+- no production telemetry;
+- no individual driver score;
+- no automated enforcement decision;
+- investigation state remains local and temporary.
+
+A real deployment would require authentication, authorization, encrypted telemetry transport, retention controls, audit logging, and privacy review.
+
+This boundary is intentional: the Week 7 build demonstrates the capability transfer without pretending that a classroom prototype is production infrastructure.
