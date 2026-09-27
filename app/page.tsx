@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { telemetrySamples } from "@/lib/data/telemetry";
+import { detectAbruptEvent } from "@/lib/ml/detectAbruptEvent";
 
 type Confidence = "LOW" | "MEDIUM" | "HIGH";
 
@@ -82,9 +84,25 @@ function markerClasses(confidence: Confidence) {
 
 export default function Home() {
   const [selectedId, setSelectedId] = useState("04");
+  const [investigating, setInvestigating] = useState(false);
+  const [classification, setClassification] = useState("");
+  const [severity, setSeverity] = useState("Medium");
+  const [investigationConfidence, setInvestigationConfidence] = useState("Medium");
+  const [notes, setNotes] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const selected =
     locations.find((location) => location.id === selectedId) ?? locations[1];
+
+  const selectedTelemetry = telemetrySamples.filter(
+    (sample) => sample.locationId === selectedId
+  );
+
+  const detections = selectedTelemetry.map(detectAbruptEvent);
+
+  const abruptDetections = detections.filter(
+    (detection) => detection.abrupt
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -169,7 +187,10 @@ export default function Home() {
                   <button
                     key={location.id}
                     type="button"
-                    onClick={() => setSelectedId(location.id)}
+                    onClick={() => {
+                      setSelectedId(location.id);
+                      setInvestigating(false);
+                    }}
                     aria-label={`Select ${location.label}`}
                     className="absolute -translate-x-1/2 -translate-y-1/2 text-left"
                     style={{ left: `${location.x}%`, top: `${location.y}%` }}
@@ -266,13 +287,252 @@ export default function Home() {
               </p>
             </div>
 
-            <button className="mt-8 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white">
-              Investigate →
-            </button>
+            <div className="mt-7 border-t border-slate-200 pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Signal pipeline
+                  </p>
+                  <h4 className="mt-1 text-sm font-semibold">
+                    Phone telemetry → event detection
+                  </h4>
+                </div>
 
-            <p className="mt-4 text-center text-xs text-slate-400">
-              Hotspot ≠ danger · Human investigation required
-            </p>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                  LIGHTWEIGHT ML
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-lg bg-slate-50 p-3">
+                  <p className="text-lg font-semibold">
+                    {selectedTelemetry.length}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    sensor samples
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-slate-50 p-3">
+                  <p className="text-lg font-semibold">
+                    {abruptDetections.length}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    abrupt detected
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-slate-50 p-3">
+                  <p className="text-lg font-semibold">
+                    {detections.length
+                      ? Math.round(
+                          (detections.reduce(
+                            (sum, detection) => sum + detection.confidence,
+                            0
+                          ) /
+                            detections.length) *
+                            100
+                        )
+                      : 0}%
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    mean signal confidence
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {detections.length > 0 ? (
+                  detections.map((detection) => (
+                    <div
+                      key={detection.id}
+                      className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-xs font-semibold">
+                          {detection.eventClass.replaceAll("_", " ")}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {detection.dominantSignal}
+                        </p>
+                      </div>
+
+                      <span className="text-xs font-medium text-slate-600">
+                        {Math.round(detection.confidence * 100)}%
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+                    No telemetry samples shown for this location in the
+                    synthetic pilot slice.
+                  </p>
+                )}
+              </div>
+
+              <p className="mt-3 text-[11px] leading-4 text-slate-400">
+                Synthetic smartphone GPS, accelerometer, gyroscope, and speed
+                signals. Detection identifies candidate motion events, not
+                causes, danger, or driver fault.
+              </p>
+            </div>
+
+            {!investigating ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setInvestigating(true)}
+                  className="mt-8 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white"
+                >
+                  Investigate →
+                </button>
+
+                <p className="mt-4 text-center text-xs text-slate-400">
+                  Hotspot ≠ danger · Human investigation required
+                </p>
+              </>
+            ) : (
+              <div className="mt-8 rounded-xl border border-slate-300 bg-slate-50 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Investigation
+                    </p>
+                    <h4 className="mt-1 font-semibold">
+                      Classify the observed pattern
+                    </h4>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setInvestigating(false)}
+                    className="text-xs font-semibold text-slate-500"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {!saved ? (
+                  <>
+                    <p className="mt-5 text-xs font-semibold text-slate-600">
+                      1 · Likely explanation
+                    </p>
+
+                    <div className="mt-2 grid gap-2">
+                      {[
+                        ["Operational", "Stop placement, schedule, dispatch, or operating rule."],
+                        ["External", "Road surface, signal, geometry, traffic, or street condition."],
+                        ["Mixed / unclear", "Evidence does not support a single explanation yet."],
+                      ].map(([label, description]) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => setClassification(label)}
+                          className={`w-full rounded-lg border p-3 text-left ${
+                            classification === label
+                              ? "border-slate-900 bg-white ring-1 ring-slate-900"
+                              : "border-slate-200 bg-white"
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold">
+                            {label}
+                          </span>
+                          <span className="mt-1 block text-xs text-slate-500">
+                            {description}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-4">
+                      <label className="text-xs font-semibold text-slate-600">
+                        2 · Severity
+                        <select
+                          value={severity}
+                          onChange={(event) => setSeverity(event.target.value)}
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm font-medium text-slate-900"
+                        >
+                          <option>Low</option>
+                          <option>Medium</option>
+                          <option>High</option>
+                        </select>
+                      </label>
+
+                      <label className="text-xs font-semibold text-slate-600">
+                        3 · Investigation confidence
+                        <select
+                          value={investigationConfidence}
+                          onChange={(event) =>
+                            setInvestigationConfidence(event.target.value)
+                          }
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm font-medium text-slate-900"
+                        >
+                          <option>Low</option>
+                          <option>Medium</option>
+                          <option>High</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <label className="mt-5 block text-xs font-semibold text-slate-600">
+                      4 · Investigation notes
+                      <textarea
+                        value={notes}
+                        onChange={(event) => setNotes(event.target.value)}
+                        placeholder="Record what was observed or checked..."
+                        className="mt-2 min-h-24 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      disabled={!classification}
+                      onClick={() => setSaved(true)}
+                      className="mt-5 w-full rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                    >
+                      Save Classification
+                    </button>
+
+                    <p className="mt-4 text-xs leading-5 text-slate-500">
+                      Classification is a human investigation outcome. Sensor
+                      and ML evidence does not assign cause or responsibility.
+                    </p>
+                  </>
+                ) : (
+                  <div className="mt-5">
+                    <div className="rounded-lg border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Saved classification
+                      </p>
+
+                      <p className="mt-2 text-lg font-semibold">
+                        {classification}
+                      </p>
+
+                      <div className="mt-3 flex gap-2 text-xs">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                          Severity: {severity}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                          Confidence: {investigationConfidence}
+                        </span>
+                      </div>
+
+                      {notes && (
+                        <p className="mt-4 text-sm leading-6 text-slate-600">
+                          {notes}
+                        </p>
+                      )}
+                    </div>
+
+                    <p className="mt-4 text-xs leading-5 text-slate-500">
+                      Human classification saved locally for this prototype.
+                      No driver score or automated enforcement action is created.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </aside>
         </div>
       </section>
